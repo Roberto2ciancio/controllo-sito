@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-01-controllo-sito-design.md`
 
+## Stato e come riprendere
+
+- **Metodo scelto:** esecuzione diretta con `superpowers:executing-plans`, poi una revisione finale indipendente. Roberto ha lasciato la scelta all'assistente e ha approvato il piano.
+- **Stato al 2026-11-01:** solo documento e piano. Nessuna attività iniziata: si parte dal Task 1. Il repo è privato finché non si arriva al Task 9.
+- Roberto parla italiano e non è sempre al PC: le domande vanno fatte solo ai punti di arresto previsti.
+- Le cartelle `../bere-app` e `../roberto-site` usate da alcuni passaggi vanno scaricate con `gh repo clone`, se mancano su quel PC. Il valore `ecrknwwinnkwdwngkois` è il progetto Supabase di Bere; l'altro progetto Supabase dell'account è un sito di Roberto e non va toccato.
+
 ## Global Constraints
 
 - Costo zero: GitHub Pages e piano gratuito di Supabase, usando il progetto di Bere `ecrknwwinnkwdwngkois`.
