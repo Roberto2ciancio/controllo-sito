@@ -70,9 +70,6 @@ async function request(url: string, timeoutMs: number): Promise<ProbeResponse> {
   }
 }
 
-// TEMPORANEO (diagnosi Task 9): ultimo codice d'errore di certificate(), mai l'host. Da rimuovere dopo la diagnosi.
-let lastCertDebug: string | undefined
-
 function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date } | null> {
   return new Promise((resolvePromise) => {
     let settled = false
@@ -83,7 +80,7 @@ function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date 
     }
     const timer = setTimeout(() => {
       socket.destroy()
-      lastCertDebug = 'timeout'
+      console.error('controllo-sito: certificate() timeout dopo', timeoutMs, 'ms')
       finish(null)
     }, timeoutMs)
     const socket = tls.connect({ host, port: 443, servername: host, timeout: timeoutMs }, () => {
@@ -96,7 +93,7 @@ function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date 
       clearTimeout(timer)
       // Solo il codice d'errore, mai err.message: può contenere l'host controllato.
       const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : undefined
-      lastCertDebug = String(code ?? err?.name ?? 'sconosciuto')
+      console.error('controllo-sito: certificate() errore socket, code=', code ?? err?.name ?? 'sconosciuto')
       finish(null)
     })
   })
@@ -126,12 +123,4 @@ const handlerDeps: HandlerDeps = {
   allowedOrigins: ALLOWED_ORIGINS,
 }
 
-Deno.serve(async (request) => {
-  lastCertDebug = undefined
-  const response = await handleCheck(request, handlerDeps)
-  if (!lastCertDebug) return response
-  // TEMPORANEO: espone solo un codice d'errore tecnico, mai l'indirizzo controllato. Da rimuovere dopo la diagnosi.
-  const headers = new Headers(response.headers)
-  headers.set('x-debug-cert', lastCertDebug)
-  return new Response(response.body, { status: response.status, headers })
-})
+Deno.serve((request) => handleCheck(request, handlerDeps))
