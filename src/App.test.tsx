@@ -128,6 +128,20 @@ describe('ResultView', () => {
     expect(screen.getByText(/Il sito ha rifiutato il controllo/)).toBeInTheDocument()
   })
 
+  it('nella vista "Spiegami semplice" mostra anche l\'elenco compresso dei controlli superati e non verificati', () => {
+    const report = okReport({
+      grade: 'B',
+      checks: withChecks([
+        { id: 'hsts', outcome: 'problem', urgency: 'recommended' },
+        { id: 'expiry', outcome: 'unverified', reason: 'unavailable' },
+      ]),
+    })
+    render(<ResultView report={report} address="esempio.it" onRetry={vi.fn()} />)
+    expect(screen.getByText('Altri controlli')).toBeInTheDocument()
+    expect(screen.getByText(/Il sito usa una connessione sicura/)).toBeInTheDocument()
+    expect(screen.getByText(/Non è stato possibile leggere questa informazione durante il controllo/)).toBeInTheDocument()
+  })
+
   it('mostra "partito da" quando il sito finale differisce dall\'indirizzo scritto', () => {
     const report = okReport({ grade: 'A', domain: 'www.esempio.it', startedFrom: 'esempio.it', checks: withChecks([]) })
     render(<ResultView report={report} address="esempio.it" onRetry={vi.fn()} />)

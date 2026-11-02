@@ -34,3 +34,7 @@ npm run build
 ## Privacy e sicurezza dello strumento
 
 Nessun account, nessun risultato salvato. Solo domini pubblici: indirizzi IP, `localhost` e nomi interni sono rifiutati. Per i limiti si conserva solo un'impronta non reversibile dell'IP più il dominio controllato, cancellati dopo 48 ore. Dettagli completi nel documento di progetto.
+
+### Rischio residuo: DNS rebinding
+
+Prima di ogni richiesta (compresi i reindirizzamenti) il nome viene risolto e l'indirizzo controllato contro gli intervalli privati/riservati. La richiesta vera e propria, però, usa `fetch` con lo stesso nome a dominio: `fetch` risolve di nuovo il nome per conto proprio, in modo indipendente dalla risoluzione già fatta per il controllo. Se un dominio ostile cambia la risposta DNS tra questi due momenti (DNS rebinding), la richiesta potrebbe arrivare a un indirizzo che il controllo aveva già giudicato vietato. Non è stato chiuso del tutto: chiuderlo richiederebbe di collegarsi direttamente all'indirizzo IP già verificato (bypassando la risoluzione interna di `fetch`) mantenendo comunque il nome host corretto per il certificato TLS, una riscrittura del livello di rete non fatta in questa prima versione. Impatto pratico limitato: lo strumento è senza autenticazione, non restituisce il corpo della risposta e ogni richiesta ha un budget di pochi secondi, ma il rischio esiste ed è giusto saperlo prima di pubblicare.

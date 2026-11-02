@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ProblemCard from './ProblemCard.tsx'
 import TechnicalView from './TechnicalView.tsx'
-import { SITE_ISSUE_COPY } from '../content/checks.ts'
+import { CHECK_COPY, SITE_ISSUE_COPY, UNVERIFIED_COPY } from '../content/checks.ts'
 import type { Check, Report } from '../../supabase/functions/site-check/core/types.ts'
 
 const CLOSING_SENTENCE = 'Questo controllo legge solo ciò che il sito mostra a qualsiasi visitatore. Un voto alto non garantisce che il sito sia sicuro.'
@@ -21,6 +21,27 @@ function sortedProblems(checks: Check[]): Check[] {
   return checks
     .filter((c) => c.outcome === 'problem')
     .toSorted((a, b) => URGENCY_RANK[a.urgency ?? 'recommended'] - URGENCY_RANK[b.urgency ?? 'recommended'])
+}
+
+function otherChecksSummary(checks: Check[]): Check[] {
+  return checks.filter((c) => c.outcome !== 'problem')
+}
+
+function OtherChecksList({ checks }: { checks: Check[] }) {
+  const others = otherChecksSummary(checks)
+  if (others.length === 0) return null
+
+  return (
+    <div>
+      <h3>Altri controlli</h3>
+      <ul>
+        {others.map((check) => {
+          const copy = CHECK_COPY[check.id]
+          return <li key={check.id}>{check.outcome === 'passed' ? copy.passedTitle : `${copy.title} — non verificato: ${check.reason ? UNVERIFIED_COPY[check.reason] : ''}`}</li>
+        })}
+      </ul>
+    </div>
+  )
 }
 
 function RetryButton({ onRetry }: { onRetry: () => void }) {
@@ -89,6 +110,7 @@ function ResultView({ report, onRetry }: ResultViewProps) {
       {view === 'simple' ? (
         <div role="tabpanel">
           {problems.length === 0 ? <p>Nessun problema trovato in questo controllo.</p> : problems.map((check) => <ProblemCard key={check.id} check={check} />)}
+          <OtherChecksList checks={checks} />
         </div>
       ) : (
         <div role="tabpanel">
