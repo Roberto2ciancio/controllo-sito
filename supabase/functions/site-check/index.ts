@@ -1,7 +1,6 @@
-// Collega la logica pura di ./core a DNS, fetch e certificato TLS veri (Deno Edge Function).
+// Collega la logica pura di ./core a DNS e fetch veri (Deno Edge Function).
 // La logica stessa resta in core/ e non importa nulla di specifico di Deno: è lì che vivono i test.
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import tls from 'node:tls'
 import { handleCheck, hashIp, type ClaimResult, type HandlerDeps } from './core/handler.ts'
 import { probeSite, RequestError, type ProbeDeps, type ProbeResponse, type RequestFailure } from './core/probe.ts'
 
@@ -70,36 +69,7 @@ async function request(url: string, timeoutMs: number): Promise<ProbeResponse> {
   }
 }
 
-function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date } | null> {
-  return new Promise((resolvePromise) => {
-    let settled = false
-    const finish = (value: { notAfter: Date } | null) => {
-      if (settled) return
-      settled = true
-      resolvePromise(value)
-    }
-    const timer = setTimeout(() => {
-      socket.destroy()
-      console.error('controllo-sito: certificate() timeout dopo', timeoutMs, 'ms')
-      finish(null)
-    }, timeoutMs)
-    const socket = tls.connect({ host, port: 443, servername: host, timeout: timeoutMs }, () => {
-      clearTimeout(timer)
-      const cert = socket.getPeerCertificate()
-      socket.end()
-      finish(cert?.valid_to ? { notAfter: new Date(cert.valid_to) } : null)
-    })
-    socket.on('error', (err) => {
-      clearTimeout(timer)
-      // Solo il codice d'errore, mai err.message: può contenere l'host controllato.
-      const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : undefined
-      console.error('controllo-sito: certificate() errore socket, code=', code ?? err?.name ?? 'sconosciuto')
-      finish(null)
-    })
-  })
-}
-
-const probeDeps: ProbeDeps = { resolve, request, certificate, now: () => new Date() }
+const probeDeps: ProbeDeps = { resolve, request, now: () => new Date() }
 
 function getIp(request: Request): string {
   const cf = request.headers.get('cf-connecting-ip')

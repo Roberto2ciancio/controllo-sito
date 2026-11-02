@@ -67,21 +67,6 @@ export const CHECK_COPY: Record<CheckId, CheckCopy> = {
     },
   },
 
-  expiry: {
-    title: 'Certificato in scadenza',
-    passedTitle: 'Il certificato non scade a breve',
-    consequence: "Quando il certificato scade, il sito smette di essere raggiungibile in modo sicuro, come se non avesse più questa protezione.",
-    docUrl: 'https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/TLS',
-    guides: {
-      altro: { steps: ['Rinnova il certificato dal pannello del tuo hosting prima della scadenza.', CONTACT_HOST.steps[0]] },
-      wordpress: {
-        steps: ['Se il rinnovo è automatico (come con Really Simple SSL o la maggior parte degli hosting) di norma non serve fare nulla: verifica comunque la data nel pannello.', "Se il rinnovo non è automatico, segna la scadenza e rinnovalo per tempo dal pannello dell'hosting."],
-        sourceUrl: 'https://www.wpbeginner.com/beginners-guide/how-to-add-http-security-headers-in-wordpress/',
-      },
-      wix: WIX_TLS_MANAGED,
-    },
-  },
-
   redirect: {
     title: 'Il sito non porta automaticamente alla versione sicura',
     passedTitle: 'Il sito porta automaticamente alla versione sicura',
@@ -205,7 +190,6 @@ export const UNVERIFIED_COPY: Record<UnverifiedReason, string> = {
   rejected: "Il sito ha rifiutato questo controllo, probabilmente per una protezione automatica anti-robot.",
   'error-page': 'La pagina principale ha risposto con un errore, quindi questo aspetto non si può giudicare.',
   'fix-https-first': "Prima va risolto il problema sulla connessione sicura: finché non è a posto, questo controllo non si può fare.",
-  unavailable: 'Non è stato possibile leggere questa informazione durante il controllo.',
   timeout: 'Il controllo si è fermato perché ha richiesto troppo tempo.',
 }
 

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { CHECK_COPY, SITE_ISSUE_COPY, UNVERIFIED_COPY } from './checks.ts'
 import type { CheckId, UnverifiedReason } from '../../supabase/functions/site-check/core/types.ts'
 
-const CHECK_IDS: CheckId[] = ['https', 'certificate', 'expiry', 'redirect', 'hsts', 'csp', 'framing', 'content-type', 'referrer', 'cookies']
-const UNVERIFIED_REASONS: UnverifiedReason[] = ['network', 'rejected', 'error-page', 'fix-https-first', 'unavailable', 'timeout']
+const CHECK_IDS: CheckId[] = ['https', 'certificate', 'redirect', 'hsts', 'csp', 'framing', 'content-type', 'referrer', 'cookies']
+const UNVERIFIED_REASONS: UnverifiedReason[] = ['network', 'rejected', 'error-page', 'fix-https-first', 'timeout']
 const JARGON = /\b(CSP|HSTS|TLS|header)\b/i
 
 describe('CHECK_COPY', () => {

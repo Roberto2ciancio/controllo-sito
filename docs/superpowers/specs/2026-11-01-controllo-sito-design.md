@@ -50,7 +50,7 @@ Per Roberto lo strumento fallisce, anche se tecnicamente funziona, se:
 - In alto: dominio, voto e numero di cose da sistemare, per esempio "Voto C: 2 cose da sistemare".
 - Un interruttore tra **Spiegami semplice** (predefinito) e **Dettagli tecnici**.
 - **Spiegami semplice:** i problemi in ordine di urgenza. Ognuno ha: etichetta di urgenza, titolo senza gergo, conseguenza concreta per il sito, schede **WordPress / Wix / Altro** con i passaggi. Sotto, l'elenco compresso dei controlli superati e non verificati.
-- **Dettagli tecnici:** per ogni controllo, esito e valore osservato (per esempio il testo dell'intestazione o la data di scadenza), con il riferimento alla documentazione.
+- **Dettagli tecnici:** per ogni controllo, esito e valore osservato (per esempio il testo dell'intestazione o l'elenco degli attributi di un cookie), con il riferimento alla documentazione.
 - Sempre visibile, in fondo: data e ora del controllo e la frase "Questo controllo legge solo ciò che il sito mostra a qualsiasi visitatore. Un voto alto non garantisce che il sito sia sicuro."
 - Un pulsante per ripetere il controllo.
 
@@ -64,7 +64,6 @@ Ogni controllo produce uno di questi esiti: **superato**, **da sistemare** con u
 |---|---|---|---|
 | HTTPS disponibile | La pagina risponde su `https://` | Non risponde su `https://` ma risponde su `http://` | Critica |
 | Certificato valido | La connessione HTTPS si stabilisce con verifica attiva | Errore di certificato (scaduto, nome errato, emittente non attendibile) | Critica |
-| Scadenza del certificato | Oltre 30 giorni | Tra 8 e 30 giorni: importante. 7 giorni o meno: critica | Vedi a sinistra |
 | Da HTTP a HTTPS | `http://` reindirizza a `https://` dello stesso sito | Resta su `http://` | Importante |
 | HSTS | `Strict-Transport-Security` con `max-age` di almeno 180 giorni | Assente o inferiore | Consigliata |
 | Protezione dai contenuti pericolosi | `Content-Security-Policy` presente | Assente | Consigliata |
@@ -177,7 +176,7 @@ Il server fa richieste verso indirizzi scelti da chiunque: è il rischio princip
 
 ## Lasciato a chi costruisce
 
-- **Da verificare per primo:** ottenere la data di scadenza del certificato da una Edge Function. Le API di Deno potrebbero non esporre il certificato. Provare `node:tls` e `getPeerCertificate`, e controllarlo davvero sulla piattaforma prima di costruirci sopra. Se non funziona, il controllo Scadenza risulta **non verificato**, senza mai inventare un valore. Roberto va avvisato, perché lo strumento perderebbe una delle spiegazioni più utili.
+- **Verificato (Task 9):** la data di scadenza del certificato non si può ottenere da una Edge Function su Supabase. `node:tls` si collega correttamente, ma `getPeerCertificate()` nell'ambiente reale non espone `valid_to`: non un errore, un limite della piattaforma. Roberto è stato avvisato e ha deciso di togliere "Scadenza del certificato" dall'elenco dei controlli, invece di mostrare un controllo sempre "non verificato". La tabella sopra e il codice non lo includono più.
 - **Log pubblici dei certificati:** non si usano. Dicono quali certificati sono stati emessi, non quale il sito sta usando, quindi potrebbero dare un falso allarme. Inoltre invierebbero a terzi il dominio controllato.
 - **Da verificare:** se la Edge Function può impedire che un nome venga risolto in modo diverso tra il controllo e la connessione. Se non si può chiudere del tutto, documentare il rischio residuo.
 - Aspetto dell'interfaccia: un'identità propria, da definire con `impeccable` prima di scrivere le schermate. Deve risultare professionale perché sta su un CV, e il sito di Roberto usa viola su fondo scuro, senza obbligo di somiglianza.

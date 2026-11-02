@@ -1,7 +1,6 @@
 export type CheckId =
   | 'https'
   | 'certificate'
-  | 'expiry'
   | 'redirect'
   | 'hsts'
   | 'csp'
@@ -12,7 +11,7 @@ export type CheckId =
 
 export type Urgency = 'critical' | 'important' | 'recommended'
 
-export type UnverifiedReason = 'network' | 'rejected' | 'error-page' | 'fix-https-first' | 'unavailable' | 'timeout'
+export type UnverifiedReason = 'network' | 'rejected' | 'error-page' | 'fix-https-first' | 'timeout'
 
 export interface Check {
   id: CheckId

@@ -21,15 +21,12 @@ export interface ProbeDeps {
   resolve(host: string): Promise<string[]>
   /** Non segue i reindirizzamenti: restituisce la risposta grezza, oppure lancia RequestError. */
   request(url: string, timeoutMs: number): Promise<ProbeResponse>
-  certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date } | null>
   now(): Date
 }
 
 const TOTAL_BUDGET_MS = 20000
 const ATTEMPT_BUDGET_MS = 8000
 const MAX_REDIRECTS = 5
-const EXPIRY_PASS_DAYS = 30
-const EXPIRY_CRITICAL_DAYS = 7
 const REJECTED_STATUSES = new Set([401, 403, 429, 503])
 const CERT_FAILURES = new Set<RequestFailure>(['cert-expired', 'cert-name', 'cert-issuer'])
 
@@ -74,19 +71,11 @@ function unverifiedGroup(reason: UnverifiedReason): Check[] {
   const checks: Check[] = [
     { id: 'https', outcome: 'unverified', reason },
     { id: 'certificate', outcome: 'unverified', reason },
-    { id: 'expiry', outcome: 'unverified', reason },
   ]
   for (const id of HEADER_CHECK_IDS) {
     checks.push({ id, outcome: 'unverified', urgency: id === 'cookies' ? undefined : 'recommended', reason })
   }
   return checks
-}
-
-function expiryCheck(notAfter: Date, now: Date): Check {
-  const diffDays = (notAfter.getTime() - now.getTime()) / 86_400_000
-  if (diffDays > EXPIRY_PASS_DAYS) return { id: 'expiry', outcome: 'passed', observed: notAfter.toISOString() }
-  const urgency = diffDays <= EXPIRY_CRITICAL_DAYS ? 'critical' : 'important'
-  return { id: 'expiry', outcome: 'problem', urgency, observed: notAfter.toISOString() }
 }
 
 type ChainOutcome =
@@ -195,11 +184,7 @@ export async function probeSite(deps: ProbeDeps, domain: string): Promise<Report
     const errorPage = !rejected && response.status >= 400 && response.status < 600
 
     checks.push({ id: 'https', outcome: 'passed' })
-
-    const certTimeout = attemptTimeout(deps, deadline)
-    const cert = certTimeout > 0 ? await deps.certificate(finalHost, certTimeout) : null
     checks.push({ id: 'certificate', outcome: 'passed' })
-    checks.push(cert ? expiryCheck(cert.notAfter, deps.now()) : { id: 'expiry', outcome: 'unverified', reason: 'unavailable' })
 
     if (rejected || errorPage) {
       siteIssue = rejected ? 'rejected' : 'error-page'
@@ -214,7 +199,6 @@ export async function probeSite(deps: ProbeDeps, domain: string): Promise<Report
     finalHost = httpsOutcome.finalHost
     checks.push({ id: 'https', outcome: 'passed' })
     checks.push({ id: 'certificate', outcome: 'problem', urgency: 'critical', observed: httpsOutcome.failure })
-    checks.push({ id: 'expiry', outcome: 'unverified', reason: 'fix-https-first' })
     for (const id of HEADER_CHECK_IDS) {
       checks.push({ id, outcome: 'unverified', urgency: id === 'cookies' ? undefined : 'recommended', reason: 'fix-https-first' })
     }
@@ -234,7 +218,6 @@ export async function probeSite(deps: ProbeDeps, domain: string): Promise<Report
     if (fallback && fallback.status >= 200 && fallback.status < 400) {
       checks.push({ id: 'https', outcome: 'problem', urgency: 'critical' })
       checks.push({ id: 'certificate', outcome: 'unverified', reason: 'fix-https-first' })
-      checks.push({ id: 'expiry', outcome: 'unverified', reason: 'fix-https-first' })
       for (const id of HEADER_CHECK_IDS) {
         checks.push({ id, outcome: 'unverified', urgency: id === 'cookies' ? undefined : 'recommended', reason: 'fix-https-first' })
       }

@@ -12,7 +12,6 @@ const CHECKED_AT = '2026-11-01T10:00:00.000Z'
 const PASSED_CHECKS: Check[] = [
   { id: 'https', outcome: 'passed' },
   { id: 'certificate', outcome: 'passed' },
-  { id: 'expiry', outcome: 'passed', observed: '2027-01-01T00:00:00.000Z' },
   { id: 'hsts', outcome: 'passed', urgency: 'recommended', observed: 'max-age=31536000' },
   { id: 'csp', outcome: 'passed', urgency: 'recommended', observed: "default-src 'self'" },
   { id: 'framing', outcome: 'passed', urgency: 'recommended', observed: 'X-Frame-Options: DENY' },
@@ -133,13 +132,13 @@ describe('ResultView', () => {
       grade: 'B',
       checks: withChecks([
         { id: 'hsts', outcome: 'problem', urgency: 'recommended' },
-        { id: 'expiry', outcome: 'unverified', reason: 'unavailable' },
+        { id: 'csp', outcome: 'unverified', urgency: 'recommended', reason: 'network' },
       ]),
     })
     render(<ResultView report={report} address="esempio.it" onRetry={vi.fn()} />)
     expect(screen.getByText('Altri controlli')).toBeInTheDocument()
     expect(screen.getByText(/Il sito usa una connessione sicura/)).toBeInTheDocument()
-    expect(screen.getByText(/Non è stato possibile leggere questa informazione durante il controllo/)).toBeInTheDocument()
+    expect(screen.getByText(/Il sito non ha risposto durante il controllo/)).toBeInTheDocument()
   })
 
   it('mostra "partito da" quando il sito finale differisce dall\'indirizzo scritto', () => {

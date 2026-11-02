@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { probeSite, RequestError, type ProbeDeps, type ProbeResponse, type RequestFailure } from './probe.ts'
 
 const PUBLIC_IP = ['93.184.216.34']
@@ -10,7 +10,6 @@ function resp(status: number, headers: Record<string, string> = {}, setCookies: 
 interface FakeOptions {
   resolve?: Record<string, string[]>
   requests?: Record<string, ProbeResponse | RequestFailure>
-  cert?: { notAfter: Date } | null
   now?: Date
   /** Avanza l'orologio di questi millisecondi a ogni chiamata a request(), per simulare un controllo lento. */
   advanceMsPerRequest?: number
@@ -35,9 +34,6 @@ function makeDeps(opts: FakeOptions): ProbeDeps {
       if (typeof entry === 'string') throw new RequestError(entry)
       return entry
     },
-    async certificate() {
-      return opts.cert === undefined ? { notAfter: new Date(clock.getTime() + 90 * 86_400_000) } : opts.cert
-    },
     now() {
       return clock
     },
@@ -46,7 +42,7 @@ function makeDeps(opts: FakeOptions): ProbeDeps {
 }
 
 describe('probeSite: sito sano', () => {
-  it('restituisce 10 controlli e voto A, senza startedFrom', async () => {
+  it('restituisce 9 controlli e voto A, senza startedFrom', async () => {
     const deps = makeDeps({
       requests: {
         'https://esempio.it/': resp(200, {
@@ -62,7 +58,7 @@ describe('probeSite: sito sano', () => {
     expect(report.status).toBe('ok')
     expect(report.domain).toBe('esempio.it')
     expect(report.startedFrom).toBeUndefined()
-    expect(report.checks).toHaveLength(10)
+    expect(report.checks).toHaveLength(9)
     expect(report.grade).toBe('A')
   })
 })
@@ -136,39 +132,6 @@ describe('probeSite: errori di certificato', () => {
   })
 })
 
-describe('probeSite: scadenza del certificato', () => {
-  const base = new Date('2026-01-01T00:00:00Z')
-  it.each([
-    [31, 'passed', undefined],
-    [30, 'problem', 'important'],
-    [8, 'problem', 'important'],
-    [7, 'problem', 'critical'],
-    [0, 'problem', 'critical'],
-    [-5, 'problem', 'critical'],
-  ])('a %i giorni: %s %s', async (days, outcome, urgency) => {
-    const deps = makeDeps({
-      now: base,
-      cert: { notAfter: new Date(base.getTime() + Number(days) * 86_400_000) },
-      requests: { 'https://esempio.it/': resp(200), 'http://esempio.it/': resp(301, { location: 'https://esempio.it/' }) },
-    })
-    const report = await probeSite(deps, 'esempio.it')
-    const expiry = report.checks?.find((c) => c.id === 'expiry')
-    expect(expiry?.outcome).toBe(outcome)
-    if (urgency) expect(expiry?.urgency).toBe(urgency)
-  })
-
-  it('certificate() che restituisce null dà expiry non verificato unavailable', async () => {
-    const deps = makeDeps({
-      cert: null,
-      requests: { 'https://esempio.it/': resp(200), 'http://esempio.it/': resp(301, { location: 'https://esempio.it/' }) },
-    })
-    const report = await probeSite(deps, 'esempio.it')
-    const expiry = report.checks?.find((c) => c.id === 'expiry')
-    expect(expiry?.outcome).toBe('unverified')
-    expect(expiry?.reason).toBe('unavailable')
-  })
-})
-
 describe('probeSite: da http a https', () => {
   it('http:// che porta a https:// dello stesso sito passa', async () => {
     const deps = makeDeps({
@@ -233,7 +196,7 @@ describe('probeSite: dominio di arrivo', () => {
     expect(report.startedFrom).toBeUndefined()
   })
 
-  it('esempio.it che arriva ad altro.it ha startedFrom e il certificato letto è quello del dominio di arrivo', async () => {
+  it('esempio.it che arriva ad altro.it ha startedFrom e domain è quello di arrivo', async () => {
     const deps = makeDeps({
       resolve: { 'esempio.it': PUBLIC_IP, 'altro.it': PUBLIC_IP },
       requests: {
@@ -242,12 +205,9 @@ describe('probeSite: dominio di arrivo', () => {
         'http://esempio.it/': resp(301, { location: 'https://esempio.it/' }),
       },
     })
-    const certificate = vi.fn(async (_host: string) => ({ notAfter: new Date('2027-01-01') }))
-    const deps2: ProbeDeps = { ...deps, certificate }
-    const report = await probeSite(deps2, 'esempio.it')
+    const report = await probeSite(deps, 'esempio.it')
     expect(report.domain).toBe('altro.it')
     expect(report.startedFrom).toBe('esempio.it')
-    expect(certificate).toHaveBeenCalledWith('altro.it', expect.any(Number))
   })
 })
 

@@ -16,6 +16,7 @@
 - **Stato al 2026-11-01:** solo documento e piano. Nessuna attività iniziata: si parte dal Task 1. Il repo è privato finché non si arriva al Task 9.
 - Roberto parla italiano e non è sempre al PC: le domande vanno fatte solo ai punti di arresto previsti.
 - Le cartelle `../bere-app` e `../roberto-site` usate da alcuni passaggi vanno scaricate con `gh repo clone`, se mancano su quel PC. Il valore `ecrknwwinnkwdwngkois` è il progetto Supabase di Bere; l'altro progetto Supabase dell'account è un sito di Roberto e non va toccato.
+- **Addendum (Task 9, Step 4):** verificato in produzione che la scadenza del certificato non è leggibile dall'ambiente reale delle Edge Function di Supabase (`node:tls` si collega, ma `getPeerCertificate()` non espone `valid_to`). Roberto ha deciso di togliere il controllo "Scadenza del certificato" dall'elenco invece di lasciarlo sempre "non verificato". Il `CheckId` è passato da 10 a 9 voci; vedi la spec per i dettagli. Le descrizioni dei Task 1-8 qui sotto restano quelle originali, come documentazione di cosa è stato deciso quando.
 
 ## Global Constraints
 
