@@ -80,6 +80,7 @@ function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date 
     }
     const timer = setTimeout(() => {
       socket.destroy()
+      console.error('controllo-sito: certificate() timeout dopo', timeoutMs, 'ms')
       finish(null)
     }, timeoutMs)
     const socket = tls.connect({ host, port: 443, servername: host, timeout: timeoutMs }, () => {
@@ -88,8 +89,11 @@ function certificate(host: string, timeoutMs: number): Promise<{ notAfter: Date 
       socket.end()
       finish(cert?.valid_to ? { notAfter: new Date(cert.valid_to) } : null)
     })
-    socket.on('error', () => {
+    socket.on('error', (err) => {
       clearTimeout(timer)
+      // Solo il codice d'errore, mai err.message: può contenere l'host controllato.
+      const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : undefined
+      console.error('controllo-sito: certificate() errore socket, code=', code ?? err?.name ?? 'sconosciuto')
       finish(null)
     })
   })
